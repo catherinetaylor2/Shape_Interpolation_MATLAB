@@ -1,7 +1,7 @@
 % ----------Computer Animation and Games 2: Coursework 2-------------------
 % ----------------- Catherine Taylor : s169394549 -------------------------
 
-%Carries out 2D shape deformation.
+%Carries out 2D shape deformation using linear interpolation.
 
 obj1 = readObj('dino.obj'); %reads object file and stores vertices and faces.
 FV1 = obj1.f.v;
