@@ -3,6 +3,9 @@
 
 %Carries out 2D shape deformation using linear interpolation.
 
+close all;
+clear;
+
 obj1 = readObj('dino.obj'); %reads object file and stores vertices and faces.
 FV1 = obj1.f.v;
 V1 = obj1.v;
@@ -41,33 +44,35 @@ figure
 trimesh(FV1(:,1:3), V1(:,1), V1(:,2)); 
 axis([-18 15 -15 15])
 
-for i=1:100 %carries out linear interpolation from obj 1 to 2.
-    V_new = (1-1/100*i)*V1 + 1/100*i*V2;
+interpolations = 100;
+
+for i=1:interpolations %carries out linear interpolation from obj 1 to 2.
+    V_new = (1-1/interpolations*(i-2))*V1 + 1/interpolations*(i-1)*V2;
     trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2));
     axis([-20 20 -15 15])
     drawnow;
 end
 
-for i=1:100 %carries out linear interpolation from obj 1 to 2.
-    V_new = (1-1/100*i)*V2 + 1/100*i*V3;
+for i=1:interpolations %carries out linear interpolation from obj 1 to 2.
+    V_new = (1-1/interpolations*(i-1))*V2 + 1/interpolations*(i-1)*V3;
+    trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2));
+    axis([-20 20 -15 15])
+    drawnow;
+end
+for i=1:interpolations %carries out linear interpolation from obj 1 to 2.
+    V_new = (1-1/interpolations*(i-1))*V3 + 1/interpolations*(i-1)*V4;
+    trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2));
+    axis([-20 20 -15 15])
+    drawnow;
+end
+for i=1:interpolations %carries out linear interpolation from obj 1 to 2.
+    V_new = (1-1/interpolations*(i-1))*V4 + 1/interpolations*(i-1)*V5;
     trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2));
     axis([-20 20 -15 15])
     drawnow;
 end
 for i=1:100 %carries out linear interpolation from obj 1 to 2.
-    V_new = (1-1/100*i)*V3 + 1/100*i*V4;
-    trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2));
-    axis([-20 20 -15 15])
-    drawnow;
-end
-for i=1:100 %carries out linear interpolation from obj 1 to 2.
-    V_new = (1-1/100*i)*V4 + 1/100*i*V5;
-    trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2));
-    axis([-20 20 -15 15])
-    drawnow;
-end
-for i=1:100 %carries out linear interpolation from obj 1 to 2.
-    V_new = (1-1/100*i)*V5 + 1/100*i*V6;
+    V_new = (1-1/interpolations*(i-1))*V5 + 1/interpolations*(i-1)*V6;
     trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2));
     axis([-20 20 -15 15])
     drawnow;
