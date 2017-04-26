@@ -2,12 +2,8 @@
 clear;
 close all;
 
-% I1 = imread('beach_bw.bmp');
-% I2 = imread('beach.bmp');
-
-I1 = imread('a.png');
-I2 = imread('b.png');
-
+I1 = imread('beach_bw.bmp');
+I2 = imread('beach.bmp');
 
 interpolations = 100;
 for i=1:interpolations
