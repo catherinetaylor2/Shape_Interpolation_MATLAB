@@ -7,8 +7,8 @@
 close all;
 clear;
 
-P = [0, 0; 1, 1; 2, 0]; %input triangle
-Q = [0,0; 0,1; 1,0]; %goal triangle
+P = [10.4569040000000,-11.7576220000000;9.27648600000000,-12.8221320000000;9.27648700000000,-11.7575890000000];%[0, 0; 1, 1; 2, 0]; %input triangle
+Q = [8.72115000000000,-13.8898000000000;7.40367000000000,-14.7790000000000;7.55230000000000,-13.7249000000000];[0,0; 0,1; 1,0]; %goal triangle
 F=[1,2,3]; %describes connection between verices
 
 
@@ -34,6 +34,9 @@ figure('units','normalized','outerposition',[0 0 1 1]);
 suptitle('Triangle-to-triangle morphing');
 interpolations=250;
 for i=1: interpolations+1 %display morphing.
+    if (i == interpolations/2+1)
+       y=9; 
+    end
     Rt = [(R(1,1)-1)/interpolations*(i-1)+1, (R(1,2))/interpolations*(i-1); (R(2,1))/interpolations*(i-1), (R(2,2)-1)/interpolations*(i-1)+1];
     Rat = [(V(1,1)-1)/interpolations*(i-1)+1, (V(1,2))/interpolations*(i-1); (V(2,1))/interpolations*(i-1), (V(2,2)-1)/interpolations*(i-1)+1];
     Rbt = [(Ut(1,1)-1)/interpolations*(i-1)+1, (Ut(1,2))/interpolations*(i-1); (Ut(2,1))/interpolations*(i-1), (Ut(2,2)-1)/interpolations*(i-1)+1];

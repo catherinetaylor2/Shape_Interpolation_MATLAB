@@ -47,7 +47,10 @@ axis([-18 15 -15 15])
 interpolations = 100;
 
 for i=1:interpolations %carries out linear interpolation from obj 1 to 2.
-    V_new = (1-1/interpolations*(i-2))*V1 + 1/interpolations*(i-1)*V2;
+    V_new = (1-1/interpolations*(i-1))*V1 + 1/interpolations*(i-1)*V2;
+    if (1/interpolations*(i-1)==0.5)
+       y=9; 
+    end
     trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2));
     axis([-20 20 -15 15])
     drawnow;
