@@ -7,18 +7,16 @@
 close all;
 clear;
 
-obj1 = readObj('dino2.obj'); %reads object file and stores vertices and faces.
+obj1 = readObj('dino.obj'); %reads object file and stores vertices and faces.
 FV1 = obj1.f.v;
 V1 = obj1.v;
-
 a = V1(:,1); %deals with mesh data.
 V1(:,1) = -V1(:,3);
 V1(:,2) = -a;  
 
-obj2 = readObj('keyframe3.obj');
+obj2 = readObj('keyframe2.obj');
 FV2 = obj2.f.v;
 V2 = obj2.v;
-
 % a = V2(:,1); %deals with mesh data.
 % V2(:,1) = -V2(:,3);
 % V2(:,2) = -a;  
@@ -37,7 +35,7 @@ figure('units','normalized','outerposition',[0 0 1 1]);
 suptitle('Shape Interpolation');
 
 Ai=cell(1,length(FV1),1);
-inv_px=cell(1,length(FV1),1);
+inv_px=cell(1,length(FV1),1); %this will be used to find coefficients for b_ij.
 A = zeros(4*length(FV1)+2, 2*length(V1));
 b=zeros(4*length(FV1)+2,1);
 Px = zeros(6);
@@ -59,31 +57,31 @@ for i=1:length(FV1) %calculate A for each triangle.
     Al = Px\Qx;
     Ai{i} = [Al(1), Al(2); Al(4), Al(5)]; %find ideal affine transformation matrix for each triangle.
 end
-for l=1:interpolations+1
+for l=1:interpolations+1 %vary t between 0 and 1 to get deformation. 
     t=1/interpolations*l;
     for i =1:length(FV1)
         [V,D,U] = svd(Ai{i}); %decompose using single value decomposition.
         Ut=U';
         S = U*D*U'; %symmetric matrix
-        R = V*U'; %rotation matrix.
+        Rot = V*U'; %rotation matrix.
         
-        Rt = [(R(1,1)-1)*t+1, (R(1,2))*t; (R(2,1))*t, (R(2,2)-1)*t+1];
-        At = Rt*((1-t)*eye(2) +  t*S);
-        b(4*(i-1)+1:4*(i-1)+4)=[At(1,1), At(1,2), At(2,1), At(2,2)]';
+        Rot_t = [(Rot(1,1)-1)*t+1, (Rot(1,2))*t; (Rot(2,1))*t, (Rot(2,2)-1)*t+1];
+        At = Rot_t*((1-t)*eye(2) +  t*S);
+        b(4*(i-1)+1:4*(i-1)+4)=[At(1,1), At(1,2), At(2,1), At(2,2)]'; %build up matrix b, for min ||Ax-b||.
         
-        for k=1:3
+        for k=1:3 %build up matrix A, for min ||Ax-b||.
             A(4*(i-1)+1, 2*(FV1(i,k)-1)+1:2*(FV1(i,k)-1)+2) = inv_px{i}(1,2*(k-1)+1:2*(k-1)+2);
             A(4*(i-1)+2, 2*(FV1(i,k)-1)+1:2*(FV1(i,k)-1)+2) = inv_px{i}(2,2*(k-1)+1:2*(k-1)+2);
             A(4*(i-1)+3, 2*(FV1(i,k)-1)+1:2*(FV1(i,k)-1)+2) = inv_px{i}(4,2*(k-1)+1:2*(k-1)+2);
             A(4*(i-1)+4, 2*(FV1(i,k)-1)+1:2*(FV1(i,k)-1)+2) = inv_px{i}(5,2*(k-1)+1:2*(k-1)+2);
         end
     end
-    b(4*length(FV1)+1)= (1-t)*V1(1,1)+t*V2(1,1);
+    b(4*length(FV1)+1)= (1-t)*V1(1,1)+t*V2(1,1);  %constraints for fixed vertex. 
     b(4*length(FV1)+2)= (1-t)*V1(1,2)+t*V2(1,2);
     A(4*length(FV1)+1,1) = 1;
     A(4*length(FV1)+2,2)=1;
     
-    V_new = (A'*A)'\A'*b;
+    V_new = (A'*A)'\A'*b; %solve for optimal new vertex positions.
     V_1=zeros(length(V1),2);
     for i =1:length(V_new)
         if (mod(i,2)==0)
@@ -92,11 +90,12 @@ for l=1:interpolations+1
             V_1((i-1)/2+1,1) = V_new(i);
         end
     end
-    subplot(1,2,1)
+    
+    subplot(1,2,2) %display results.
     trimesh(FV1, V_1(:,1), V_1(:,2));
     title('As-rigid-as-possible');
     axis([-20 20 -15 15]);
-    subplot(1,2,2)
+    subplot(1,2,1)
     V_new2 = (1-t)*V1 + t*V2;
     trimesh(FV1, V_new2(:,1), V_new2(:,2));
     title('Linear');
