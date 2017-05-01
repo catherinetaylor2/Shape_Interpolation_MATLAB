@@ -21,9 +21,11 @@ ylabel('y')
 zlabel('z')
 axis([-1, 1, 1, 3,-1,1]);
 
-for i=1:100 %carries out linear interpolation from obj 1 to 2.
-    V_new = (1-1/100*(i-1))*V1 + 1/100*(i-1)*V2;
-    trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2), V_new(:,3));
+interpolations =1000;
+for i=1:interpolations+1 %carries out linear interpolation from obj 1 to 2.
+    t=1/interpolations*(i-1);
+    V_new = (1-t)*V1 + t*V2;
+    trimesh(FV2(:,1:3), V_new(:,1), V_new(:,2), V_new(:,3));
     axis([-2, 2, 0, 4,-2,2]);
     drawnow;
 end

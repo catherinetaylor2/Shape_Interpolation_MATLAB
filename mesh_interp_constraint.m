@@ -1,4 +1,9 @@
-%carries out mesh interp solving using the constraint method.
+% ----------Computer Animation and Games 2: Coursework 2-------------------
+% ----------------- Catherine Taylor : s169394549 -------------------------
+
+%Carries out as-rigid-as-possible shape interpolation using 2D meshes.
+%Requires two meshes with 1-1 correspondance between triangles. Solves by
+%adding a constraint to the cost function.
 
 close all;
 clear;
@@ -32,6 +37,8 @@ figure('units','normalized','outerposition',[0 0 1 1]);
 suptitle('Shape Interpolation');
 
 Ai=cell(1,length(FV1),1);
+Rot=cell(1,length(FV1),1);
+S=cell(1,length(FV1),1);
 inv_px=cell(1,length(FV1),1); %this will be used to find coefficients for b_ij.
 A = zeros(4*length(FV1)+2, 2*length(V1));
 b=zeros(4*length(FV1)+2,1);
@@ -53,20 +60,21 @@ for i=1:length(FV1) %calculate A for each triangle.
     inv_px{i} = inv(Px);
     Al = Px\Qx;
     Ai{i} = [Al(1), Al(2); Al(4), Al(5)]; %find ideal affine transformation matrix for each triangle.
+    [V,D,U] = svd(Ai{i}); %decompose using single value decomposition.
+    Ut=U';
+    S{i} = U*D*U'; %symmetric matrix
+    Rot{i} = V*U'; %rotation matrix.
 end
 for l=1:interpolations+1 %vary t between 0 and 1 to get deformation. 
     t=1/interpolations*(l-1);
 
     for i =1:length(FV1)
-        [V,D,U] = svd(Ai{i}); %decompose using single value decomposition.
-        Ut=U';
-        S = U*D*U'; %symmetric matrix
-        Rot = V*U'; %rotation matrix.
+
         
-        Rot_t = [(Rot(1,1)-1)*t+1, (Rot(1,2))*t; (Rot(2,1))*t, (Rot(2,2)-1)*t+1];
-        At = Rot_t*((1-t)*eye(2) +  t*S);
+        Rot_t = [(Rot{i}(1,1)-1)*t+1, (Rot{i}(1,2))*t; (Rot{i}(2,1))*t, (Rot{i}(2,2)-1)*t+1];
+        At = Rot_t*((1-t)*eye(2) +  t*S{i});
   
-            b(4*(i-1)+1:4*(i-1)+4)=[At(1,1), At(1,2), At(2,1), At(2,2)]'; %build up matrix b, for min ||Ax-b||.
+        b(4*(i-1)+1:4*(i-1)+4)=[At(1,1), At(1,2), At(2,1), At(2,2)]'; %build up matrix b, for min ||Ax-b||.
 
         for k=1:3 %build up matrix A, for min ||Ax-b||.
 
