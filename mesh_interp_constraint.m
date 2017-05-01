@@ -8,14 +8,14 @@
 close all;
 clear;
 
-obj1 = readObj('man.obj'); %reads object file and stores vertices and faces.
+obj1 = readObj('a.obj'); %reads object file and stores vertices and faces.
 FV1 = obj1.f.v;
 V1 = obj1.v;
 % a = V1(:,1); %deals with mesh data.
 %  V1(:,2) = -V1(:,2);
 % V1(:,2) = -a;  
 
-obj2 = readObj('man2.obj');
+obj2 = readObj('b.obj');
 FV2 = obj2.f.v;
 V2 = obj2.v;
 % V2=-V2;
