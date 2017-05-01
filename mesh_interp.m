@@ -7,20 +7,21 @@
 close all;
 clear;
 
-obj1 = readObj('dino.obj'); %reads object file and stores vertices and faces.
+obj1 = readObj('a.obj'); %reads object file and stores vertices and faces.
 FV1 = obj1.f.v;
 V1 = obj1.v;
-a = V1(:,1); %deals with mesh data.
-V1(:,1) = -V1(:,3);
-V1(:,2) = -a;  
+% a = V1(:,1); %deals with mesh data.
+% V1(:,1) = -V1(:,3);
+% V1(:,2) = -a;  
 
-obj2 = readObj('keyframe2.obj');
+obj2 = readObj('b.obj');
 FV2 = obj2.f.v;
 V2 = obj2.v;
+% V2=-V2;
 % a = V2(:,1); %deals with mesh data.
 % V2(:,1) = -V2(:,3);
 % V2(:,2) = -a;  
- V2(:,2) = -V2(:,2);
+%  V2(:,2) = -V2(:,2);
 
 figure
 subplot(1,2,1)
@@ -58,7 +59,7 @@ for i=1:length(FV1) %calculate A for each triangle.
     Ai{i} = [Al(1), Al(2); Al(4), Al(5)]; %find ideal affine transformation matrix for each triangle.
 end
 for l=1:interpolations+1 %vary t between 0 and 1 to get deformation. 
-    t=1/interpolations*l;
+    t=1/interpolations*(l-1);
     for i =1:length(FV1)
         [V,D,U] = svd(Ai{i}); %decompose using single value decomposition.
         Ut=U';
@@ -94,11 +95,11 @@ for l=1:interpolations+1 %vary t between 0 and 1 to get deformation.
     subplot(1,2,2) %display results.
     trimesh(FV1, V_1(:,1), V_1(:,2));
     title('As-rigid-as-possible');
-    axis([-20 20 -15 15]);
+    axis([-5 5 -5 5]);
     subplot(1,2,1)
     V_new2 = (1-t)*V1 + t*V2;
     trimesh(FV1, V_new2(:,1), V_new2(:,2));
     title('Linear');
-    axis([-20 20 -15 15]);
+    axis([-5 5 -5 5]);
     drawnow;
 end
