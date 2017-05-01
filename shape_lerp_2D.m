@@ -18,7 +18,7 @@ V1(:,3) = zeros(length(V1),1);
 obj2 = readObj('keyframe1.obj');
 FV2 = obj2.f.v;
 V2 = obj2.v;
-V2(:,2) = -V2(:,2);
+V2(:,1) = -V2(:,1);
 
 obj3 = readObj('keyframe2.obj');
 FV3 = obj3.f.v;
@@ -56,25 +56,25 @@ for i=1:interpolations %carries out linear interpolation from obj 1 to 2.
     drawnow;
 end
 
-for i=1:interpolations %carries out linear interpolation from obj 1 to 2.
+for i=1:interpolations %carries out linear interpolation from obj 2 to 3.
     V_new = (1-1/interpolations*(i-1))*V2 + 1/interpolations*(i-1)*V3;
     trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2));
     axis([-20 20 -15 15])
     drawnow;
 end
-for i=1:interpolations %carries out linear interpolation from obj 1 to 2.
+for i=1:interpolations %carries out linear interpolation from obj 3 to 4.
     V_new = (1-1/interpolations*(i-1))*V3 + 1/interpolations*(i-1)*V4;
     trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2));
     axis([-20 20 -15 15])
     drawnow;
 end
-for i=1:interpolations %carries out linear interpolation from obj 1 to 2.
+for i=1:interpolations %carries out linear interpolation from obj 4 to 5.
     V_new = (1-1/interpolations*(i-1))*V4 + 1/interpolations*(i-1)*V5;
     trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2));
     axis([-20 20 -15 15])
     drawnow;
 end
-for i=1:100 %carries out linear interpolation from obj 1 to 2.
+for i=1:100 %carries out linear interpolation from obj 5 to 6.
     V_new = (1-1/interpolations*(i-1))*V5 + 1/interpolations*(i-1)*V6;
     trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2));
     axis([-20 20 -15 15])

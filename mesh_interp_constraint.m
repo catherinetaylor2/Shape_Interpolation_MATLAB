@@ -1,8 +1,4 @@
-% ----------Computer Animation and Games 2: Coursework 2-------------------
-% ----------------- Catherine Taylor : s169394549 -------------------------
-
-%Carries out as-rigid-as-possible shape interpolation using 2D meshes.
-%Requires two meshes with 1-1 correspondance between triangles. 
+%carries out mesh interp solving using the constraint method.
 
 close all;
 clear;
@@ -37,8 +33,8 @@ suptitle('Shape Interpolation');
 
 Ai=cell(1,length(FV1),1);
 inv_px=cell(1,length(FV1),1); %this will be used to find coefficients for b_ij.
-A = zeros(4*length(FV1), 2*length(V1)-2);
-b=zeros(4*length(FV1),1);
+A = zeros(4*length(FV1)+2, 2*length(V1));
+b=zeros(4*length(FV1)+2,1);
 Px = zeros(6);
 Qx = zeros(6,1);
 interpolations = 50;
@@ -60,8 +56,7 @@ for i=1:length(FV1) %calculate A for each triangle.
 end
 for l=1:interpolations+1 %vary t between 0 and 1 to get deformation. 
     t=1/interpolations*(l-1);
-    v1=(1-t)*V1(1,1)+t*V2(1,1);  %constraints for fixed vertex. 
-    v2= (1-t)*V1(1,2)+t*V2(1,2);
+
     for i =1:length(FV1)
         [V,D,U] = svd(Ai{i}); %decompose using single value decomposition.
         Ut=U';
@@ -70,46 +65,44 @@ for l=1:interpolations+1 %vary t between 0 and 1 to get deformation.
         
         Rot_t = [(Rot(1,1)-1)*t+1, (Rot(1,2))*t; (Rot(2,1))*t, (Rot(2,2)-1)*t+1];
         At = Rot_t*((1-t)*eye(2) +  t*S);
-        if((FV1(i,1)==1))
-            b(4*(i-1)+1:4*(i-1)+4)=[At(1,1)- (inv_px{i}(1,1)*v1+ inv_px{i}(1,2)*v2), At(1,2)- (inv_px{i}(2,1)*v1+ inv_px{i}(2,2)*v2), At(2,1)- (inv_px{i}(4,1)*v1 + inv_px{i}(4,2)*v2), At(2,2)- (inv_px{i}(5,1)*v1+ inv_px{i}(5,2)*v2)]'; %build up matrix b, for min ||Ax-b||.
-        elseif ((FV1(i,2)==1))
-            b(4*(i-1)+1:4*(i-1)+4)=[At(1,1)- (inv_px{i}(1,3)*v1+ inv_px{i}(1,4)*v2), At(1,2)- (inv_px{i}(2,3)*v1+ inv_px{i}(2,4)*v2), At(2,1)- (inv_px{i}(4,3)*v1 + inv_px{i}(4,4)*v2), At(2,2)- (inv_px{i}(5,3)*v1+ inv_px{i}(5,4)*v2)]'; %build up matrix b, for min ||Ax-b||.
-        elseif ((FV1(i,3)==1))
-            b(4*(i-1)+1:4*(i-1)+4)=[At(1,1)- (inv_px{i}(1,5)*v1+ inv_px{i}(1,6)*v2), At(1,2)- (inv_px{i}(2,5)*v1+ inv_px{i}(2,6)*v2), At(2,1)- (inv_px{i}(4,5)*v1 + inv_px{i}(4,6)*v2), At(2,2)-(inv_px{i}(5,5)*v1+ inv_px{i}(5,6)*v2)]'; %build up matrix b, for min ||Ax-b||.
-        else
+  
             b(4*(i-1)+1:4*(i-1)+4)=[At(1,1), At(1,2), At(2,1), At(2,2)]'; %build up matrix b, for min ||Ax-b||.
-        end
+
         for k=1:3 %build up matrix A, for min ||Ax-b||.
-            if(FV1(i,k)~=1)
-            A(4*(i-1)+1, 2*(FV1(i,k)-2)+1:2*(FV1(i,k)-2)+2) = inv_px{i}(1,2*(k-1)+1:2*(k-1)+2);
-            A(4*(i-1)+2, 2*(FV1(i,k)-2)+1:2*(FV1(i,k)-2)+2) = inv_px{i}(2,2*(k-1)+1:2*(k-1)+2);
-            A(4*(i-1)+3, 2*(FV1(i,k)-2)+1:2*(FV1(i,k)-2)+2) = inv_px{i}(4,2*(k-1)+1:2*(k-1)+2);
-            A(4*(i-1)+4, 2*(FV1(i,k)-2)+1:2*(FV1(i,k)-2)+2) = inv_px{i}(5,2*(k-1)+1:2*(k-1)+2);
-            end
+
+            A(4*(i-1)+1, 2*(FV1(i,k)-1)+1:2*(FV1(i,k)-1)+2) = inv_px{i}(1,2*(k-1)+1:2*(k-1)+2);
+            A(4*(i-1)+2, 2*(FV1(i,k)-1)+1:2*(FV1(i,k)-1)+2) = inv_px{i}(2,2*(k-1)+1:2*(k-1)+2);
+            A(4*(i-1)+3, 2*(FV1(i,k)-1)+1:2*(FV1(i,k)-1)+2) = inv_px{i}(4,2*(k-1)+1:2*(k-1)+2);
+            A(4*(i-1)+4, 2*(FV1(i,k)-1)+1:2*(FV1(i,k)-1)+2) = inv_px{i}(5,2*(k-1)+1:2*(k-1)+2);
+
         end
     end
-    
+    b(4*length(FV1)+1)= (1-t)*V1(1,1)+t*V2(1,1);  %constraints for fixed vertex. 
+    b(4*length(FV1)+2)= (1-t)*V1(1,2)+t*V2(1,2);
+    A(4*length(FV1)+1,1) = 1;
+    A(4*length(FV1)+2,2)=1;
+
+
     V_new = (A'*A)'\A'*b; %solve for optimal new vertex positions.
     V_1=zeros(length(V1),2);
     for i =1:length(V_new)
         if (mod(i,2)==0)
-            V_1(1+i/2, 2) = V_new(i);
+            V_1(i/2, 2) = V_new(i);
         else
-            V_1(1+(i-1)/2+1,1) = V_new(i);
+            V_1((i-1)/2+1,1) = V_new(i);
         end
     end
-    V_1(1,1)=v1;  %constraints for fixed vertex.
-    V_1(1,2)= v2;
+
     subplot(1,2,2) %display results.
     trimesh(FV1, V_1(:,1), V_1(:,2));
     title('As-rigid-as-possible');
-    %     axis([-20 20 -15 15]);
-    axis([-2 2 -2 2]);
+%     axis([-20 20 -15 15]);
+ axis([-2 2 -2 2]);
     subplot(1,2,1)
     V_new2 = (1-t)*V1 + t*V2;
     trimesh(FV1, V_new2(:,1), V_new2(:,2));
     title('Linear');
-    %     axis([-20 20 -15 15]);
-    axis([-2 2 -2 2]);
+%     axis([-20 20 -15 15]);
+     axis([-2 2 -2 2]);
     drawnow;
 end

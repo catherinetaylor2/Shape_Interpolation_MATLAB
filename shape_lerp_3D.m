@@ -6,7 +6,7 @@
 close all;
 clear;
 
-obj1 = readObj('cube1.obj'); %reads object file and stores vertices and faces.
+obj1 = readObj('cube2.obj'); %reads object file and stores vertices and faces.
 FV1 = obj1.f.v;
 V1 = obj1.v;
 
