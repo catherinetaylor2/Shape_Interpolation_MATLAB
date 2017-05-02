@@ -6,11 +6,11 @@
 close all;
 clear;
 
-obj1 = readObj('cube2.obj'); %reads object file and stores vertices and faces.
+obj1 = readObj('sphere1.obj'); %reads object file and stores vertices and faces.
 FV1 = obj1.f.v;
 V1 = obj1.v;
 
-obj2 = readObj('cube3.obj'); %reads object file and stores vertices and faces.
+obj2 = readObj('sphere2.obj'); %reads object file and stores vertices and faces.
 FV2 = obj2.f.v;
 V2 = obj2.v;
 
