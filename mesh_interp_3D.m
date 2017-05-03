@@ -39,10 +39,12 @@ T=cell(1, length(FV1),1);
 T_t=cell(1, length(FV1),1);
 inv_kx = cell(1, length(FV1),1);
 area = cell(1, length(FV1),1);
-kx = zeros(12);
+
 b=zeros(12*length(FV1), 1);
+bx=zeros(4*length(FV1), 1);
 by=zeros(4*length(FV1), 1);
-K = zeros(12*length(FV1), 3*length(FV1)+3*length(V1));
+bz=zeros(4*length(FV1), 1);
+K = zeros(4*length(FV1), length(FV1)+length(V1));
 
 for i=1:length(FV1)
     v1 = [V1(FV1(i,1),1), V1(FV1(i,1),2),V1(FV1(i,1),3)]' ;
@@ -51,18 +53,7 @@ for i=1:length(FV1)
     v4 = 1/3*(v1+v2+v3) + cross(v2-v1, v3-v2)/sqrt(norm(cross(v2-v1, v3-v2)));
     V = [v1-v4, v2-v4, v3-v4];
     
-    kx(1, 1:4) = [v1', 1];
-    kx(2, 5:8) = [v1', 1];
-    kx(3, 9:12) = [v1', 1];
-    kx(4, 1:4) = [v2', 	1];
-    kx(5, 5:8) = [v2', 1];
-    kx(6, 9:12) = [v2', 1];
-    kx(7, 1:4) = [v3', 1];
-    kx(8, 5:8) = [v3', 1];
-    kx(9, 9:12) = [v3',1];
-    kx(10, 1:4) = [v4', 1];
-    kx(11, 5:8) = [v4', 1];
-    kx(12, 9:12) = [v4', 1];
+    kx = [v1' 1; v2', 1; v3', 1; v4', 1];
     inv_kx{i} = inv(kx);
     
     u1 = [V2(FV2(i,1),1), V2(FV2(i,1),2),V2(FV2(i,1),3)]' ;
@@ -101,28 +92,27 @@ for j=1:total_interpolations+1
         q_t = 1/sin(angle)*(sin((1-t)*angle))*q0 + sin(t*angle)/sin(angle)*q;
         Rot_t = [1-2*q_t(3)^2 - 2*q_t(4)^2, 2*q_t(2)*q_t(3)+2*q_t(1)*q_t(4), 2*q_t(4)*q_t(2)- 2*q_t(1)*q_t(3); 2*q_t(2)*q_t(3)-2*q_t(1)*q_t(4), 1-2*q_t(2)^2 - 2*q_t(4)^2, 2*q_t(3)*q_t(4) + 2*q_t(1)*q_t(2); 2*q_t(2)*q_t(4)+2*q_t(1)*q_t(3), 2*q_t(3)*q_t(4)-2*q_t(1)*q_t(2), 1- 2*q_t(2)^2 - 2*q_t(3)^2];
         M_t{i} = Rot_t*S_t;
-        
-        b(12*(i-1)+1:12*(i-1)+12) = area{i}*[M_t{i}(1,1), M_t{i}(1,2), M_t{i}(1,3), alpha*T_t{i}(1), M_t{i}(2,1), M_t{i}(2,2), M_t{i}(2,3), alpha*T_t{i}(2), M_t{i}(3,1), M_t{i}(3,2), M_t{i}(3,3), alpha*T_t{i}(3)]';
+
+        bx(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t{i}(1,1), M_t{i}(1,2), M_t{i}(1,3), alpha*T{i}(1)];
+        by(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t{i}(2,1), M_t{i}(2,2), M_t{i}(2,3), alpha*T{i}(2)];
+        bz(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t{i}(3,1), M_t{i}(3,2), M_t{i}(3,3), alpha*T{i}(3)];
         
         for k=1:3
-            for l=1:12
-                K(12*(i-1)+l, 3*(FV1(i,k)-1)+1:3*(FV1(i,k)-1)+3) = area{i}*inv_kx{i}(l,3*(k-1)+1:3*(k-1)+3);
-            end
+            K(4*(i-1)+1:4*(i-1)+4, FV1(i,k)) = area{i}*inv_kx{i}(1:4,k);
         end
         
-        K(12*(i-1)+1:12*(i-1)+12, 3*length(V1)+3*(i-1)+1) = area{i}*inv_kx{i}(1:12, 10);
-        K(12*(i-1)+1:12*(i-1)+12, 3*length(V1)+3*(i-1)+2) = area{i}*inv_kx{i}(1:12, 11);
-        K(12*(i-1)+1:12*(i-1)+12, 3*length(V1)+3*(i-1)+3) = area{i}*inv_kx{i}(1:12, 12);
+        K(4*(i-1)+1:4*(i-1)+4, length(V1)+i) = area{i}*inv_kx{i}(1:4, 4);
     end
     
-    V_new = (K'*K)\K'*b;
+    V_new_x = (K'*K)\K'*bx;
+    V_new_y = (K'*K)\K'*by;
+    V_new_z = (K'*K)\K'*bz;
     V_intermediate = zeros(length(V1),3);
-    for i=1:length(V1)
-        V_intermediate(i,1) = V_new(3*(i-1)+1);
-        V_intermediate(i,2) = V_new(3*(i-1)+2);
-        V_intermediate (i,3) = V_new(3*(i-1)+3);
-    end
     
+    V_intermediate(:,1) = V_new_x(1:length(V1));
+    V_intermediate(:,2) = V_new_y(1:length(V1));
+    V_intermediate(:,3) = V_new_z(1:length(V1));
+
     trimesh(FV1(:, 1:3), V_intermediate(:,1), V_intermediate(:,2), V_intermediate(:,3));
     xlabel('x')
     ylabel('y')
