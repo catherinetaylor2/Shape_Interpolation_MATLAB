@@ -8,11 +8,11 @@
 close all;
 clear;
 
-obj1 = readObj('cube1.obj'); %reads object file and stores vertices and faces.
+obj1 = readObj('sphere1.obj'); %reads object file and stores vertices and faces.
 FV1 = obj1.f.v;
 V1 = obj1.v;
 
-obj2 = readObj('cube2.obj'); %reads object file and stores vertices and faces.
+obj2 = readObj('sphere2.obj'); %reads object file and stores vertices and faces.
 FV2 = obj2.f.v;
 V2 = obj2.v;
 
@@ -36,7 +36,6 @@ M_t=cell(1, length(FV1), 1);
 R = cell(1, length(FV1),1);
 S = cell(1, length(FV1),1);
 T=cell(1, length(FV1),1);
-T_t=cell(1, length(FV1),1);
 inv_kx = cell(1, length(FV1),1);
 area = cell(1, length(FV1),1);
 
@@ -70,16 +69,24 @@ for i=1:length(FV1)
     R{i} = V*U';
     S{i} = U*D*U';
     
-      AB = v2-v1;
+    AB = v2-v1;
     AC = v3-v1;
     area{i} = norm(cross(AB,AC))/2;
+    
+    for k=1:3
+        K(4*(i-1)+1:4*(i-1)+4, FV1(i,k)) = area{i}*inv_kx{i}(1:4,k);
+    end
+
+    K(4*(i-1)+1:4*(i-1)+4, length(V1)+i) = area{i}*inv_kx{i}(1:4, 4);
 end
 
 for j=1:total_interpolations+1
     t=1/total_interpolations*(j-1);
+    
     for i=1:length(FV1)
+        
         S_t = (1-t)*eye(3) + t*S{i};
-        T_t{i} = t*T{i};
+        T_t = t*T{i};
         
         w = sqrt((1+R{i}(1,1)+R{i}(2,2)+R{i}(3,3)))/2; %quaternion stuff
         x = (R{i}(2,3) - R{i}(3,2))/(4*w);
@@ -89,19 +96,15 @@ for j=1:total_interpolations+1
         q =[w,x,y,z];
         angle = acos(dot(q0,q));
         
-        q_t = 1/sin(angle)*(sin((1-t)*angle))*q0 + sin(t*angle)/sin(angle)*q;
+        q_t = 1/sin(angle)*(sin((1-t)*angle))*q0 + sin(t*angle)/sin(angle)*q; %slerp
         Rot_t = [1-2*q_t(3)^2 - 2*q_t(4)^2, 2*q_t(2)*q_t(3)+2*q_t(1)*q_t(4), 2*q_t(4)*q_t(2)- 2*q_t(1)*q_t(3); 2*q_t(2)*q_t(3)-2*q_t(1)*q_t(4), 1-2*q_t(2)^2 - 2*q_t(4)^2, 2*q_t(3)*q_t(4) + 2*q_t(1)*q_t(2); 2*q_t(2)*q_t(4)+2*q_t(1)*q_t(3), 2*q_t(3)*q_t(4)-2*q_t(1)*q_t(2), 1- 2*q_t(2)^2 - 2*q_t(3)^2];
         M_t{i} = Rot_t*S_t;
 
-        bx(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t{i}(1,1), M_t{i}(1,2), M_t{i}(1,3), alpha*T{i}(1)];
-        by(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t{i}(2,1), M_t{i}(2,2), M_t{i}(2,3), alpha*T{i}(2)];
-        bz(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t{i}(3,1), M_t{i}(3,2), M_t{i}(3,3), alpha*T{i}(3)];
+        bx(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t{i}(1,1), M_t{i}(1,2), M_t{i}(1,3), alpha*T_t(1)];
+        by(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t{i}(2,1), M_t{i}(2,2), M_t{i}(2,3), alpha*T_t(2)];
+        bz(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t{i}(3,1), M_t{i}(3,2), M_t{i}(3,3), alpha*T_t(3)];
         
-        for k=1:3
-            K(4*(i-1)+1:4*(i-1)+4, FV1(i,k)) = area{i}*inv_kx{i}(1:4,k);
-        end
-        
-        K(4*(i-1)+1:4*(i-1)+4, length(V1)+i) = area{i}*inv_kx{i}(1:4, 4);
+
     end
     
     V_new_x = (K'*K)\K'*bx;

@@ -8,21 +8,14 @@
 close all;
 clear;
 
-obj1 = readObj('a.obj'); %reads object file and stores vertices and faces.
+obj1 = readObj('dino.obj'); %reads object file and stores vertices and faces.
 FV1 = obj1.f.v;
 V1 = obj1.v;
-% a = V1(:,1); %deals with mesh data.
-%  V1(:,2) = -V1(:,2);
-% V1(:,2) = -a;  
 
-obj2 = readObj('b.obj');
+obj2 = readObj('sea_horse.obj');
 FV2 = obj2.f.v;
 V2 = obj2.v;
-% V2=-V2;
-% a = V2(:,1); %deals with mesh data.
-% V2(:,1) = -V2(:,3);
-% V2(:,2) = -a;  
-% V2(:,1) = -V2(:,1);
+
 
 figure
 subplot(1,2,1)
@@ -45,6 +38,7 @@ b=zeros(4*length(FV1)+2,1);
 Px = zeros(6);
 Qx = zeros(6,1);
 interpolations = 50;
+q0 = [1,0,0,0]; %initial quaternions.
 
 
 for i=1:length(FV1) %calculate A for each triangle. 
@@ -63,7 +57,8 @@ for i=1:length(FV1) %calculate A for each triangle.
     [V,D,U] = svd(Ai{i}); %decompose using single value decomposition.
     Ut=U';
     S{i} = U*D*U'; %symmetric matrix
-    Rot{i} = V*U'; %rotation matrix.
+    R = V*U'; %rotation matrix.
+    Rot{i} = [R(1,1), R(1,2), 0; R(2,1), R(2,2), 0; 0,0,1]; %put in 3D to use quaternions.
 end
 for l=1:interpolations+1 %vary t between 0 and 1 to get deformation. 
     t=1/interpolations*(l-1);
@@ -71,7 +66,16 @@ for l=1:interpolations+1 %vary t between 0 and 1 to get deformation.
     for i =1:length(FV1)
 
         
-        Rot_t = [(Rot{i}(1,1)-1)*t+1, (Rot{i}(1,2))*t; (Rot{i}(2,1))*t, (Rot{i}(2,2)-1)*t+1];
+        w = sqrt((1+Rot{i}(1,1)+Rot{i}(2,2)+Rot{i}(3,3)))/2; %quaternion calculations
+        x = (Rot{i}(2,3) - Rot{i}(3,2))/(4*w);
+        y = (Rot{i}(3,1) - Rot{i}(1,3))/(4*w);
+        z = (Rot{i}(1,2)-Rot{i}(2,1))/(4*w);
+        q =[w,x,y,z];
+        angle = acos(dot(q0,q));
+    
+        q_t = 1/sin(angle)*(sin((1-t)*angle))*q0 + sin(t*angle)/sin(angle)*q; %slerp
+        Rot_t_full = [1-2*q_t(3)^2 - 2*q_t(4)^2, 2*q_t(2)*q_t(3)+2*q_t(1)*q_t(4), 2*q_t(4)*q_t(2)- 2*q_t(1)*q_t(3); 2*q_t(2)*q_t(3)-2*q_t(1)*q_t(4), 1-2*q_t(2)^2 - 2*q_t(4)^2, 2*q_t(3)*q_t(4) + 2*q_t(1)*q_t(2); 2*q_t(2)*q_t(4)+2*q_t(1)*q_t(3), 2*q_t(3)*q_t(4)-2*q_t(1)*q_t(2), 1- 2*q_t(2)^2 - 2*q_t(3)^2];
+        Rot_t = Rot_t_full(1:2, 1:2);
         At = Rot_t*((1-t)*eye(2) +  t*S{i});
   
         b(4*(i-1)+1:4*(i-1)+4)=[At(1,1), At(1,2), At(2,1), At(2,2)]'; %build up matrix b, for min ||Ax-b||.
@@ -104,13 +108,13 @@ for l=1:interpolations+1 %vary t between 0 and 1 to get deformation.
     subplot(1,2,2) %display results.
     trimesh(FV1, V_1(:,1), V_1(:,2));
     title('As-rigid-as-possible');
-%     axis([-20 20 -15 15]);
- axis([-2 2 -2 2]);
+    axis([-20 20 -20 15]);
+%  axis([-2 2 -2 2]);
     subplot(1,2,1)
     V_new2 = (1-t)*V1 + t*V2;
     trimesh(FV1, V_new2(:,1), V_new2(:,2));
     title('Linear');
-%     axis([-20 20 -15 15]);
-     axis([-2 2 -2 2]);
+ axis([-20 20 -20 15]);
+%      axis([-2 2 -2 2]);
     drawnow;
 end
