@@ -27,7 +27,6 @@ alpha = sqrt(1/box_length);
 total_interpolations=100;
 q0 = [1,0,0,0]; %initial quaternions.
 
-M_t=cell(1, length(FV1), 1);
 q = cell(1, length(FV1),1);
 angle = cell(1, length(FV1),1);
 S = cell(1, length(FV1),1);
@@ -91,11 +90,11 @@ for j=1:total_interpolations+1
         
         q_t = 1/sin(angle{i})*(sin((1-t)*angle{i}))*q0 + sin(t*angle{i})/sin(angle{i})*q{i}; %slerp
         Rot_t = [1-2*q_t(3)^2 - 2*q_t(4)^2, 2*q_t(2)*q_t(3)+2*q_t(1)*q_t(4), 2*q_t(4)*q_t(2)- 2*q_t(1)*q_t(3); 2*q_t(2)*q_t(3)-2*q_t(1)*q_t(4), 1-2*q_t(2)^2 - 2*q_t(4)^2, 2*q_t(3)*q_t(4) + 2*q_t(1)*q_t(2); 2*q_t(2)*q_t(4)+2*q_t(1)*q_t(3), 2*q_t(3)*q_t(4)-2*q_t(1)*q_t(2), 1- 2*q_t(2)^2 - 2*q_t(3)^2];
-        M_t{i} = Rot_t*S_t;
+        M_t = Rot_t*S_t;
 
-        bx(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t{i}(1,1), M_t{i}(1,2), M_t{i}(1,3), alpha*T_t(1)];
-        by(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t{i}(2,1), M_t{i}(2,2), M_t{i}(2,3), alpha*T_t(2)];
-        bz(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t{i}(3,1), M_t{i}(3,2), M_t{i}(3,3), alpha*T_t(3)];
+        bx(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t(1,1), M_t(1,2), M_t(1,3), alpha*T_t(1)];
+        by(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t(2,1), M_t(2,2), M_t(2,3), alpha*T_t(2)];
+        bz(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t(3,1), M_t(3,2), M_t(3,3), alpha*T_t(3)];
     end
     
     V_new_x = (K'*K)\K'*bx;
@@ -107,6 +106,7 @@ for j=1:total_interpolations+1
     trimesh(FV1(:, 1:3), V_intermediate(:,1), V_intermediate(:,2), V_intermediate(:,3));
     xlabel('x'), ylabel('y'), zlabel('z')
     title('As-rigid-as-possible 3D Interpolations')
+    axis([-2, 2, 0, 4,-2,2]);
    
     drawnow;
     
