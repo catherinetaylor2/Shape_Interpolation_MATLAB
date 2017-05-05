@@ -8,11 +8,11 @@
 close all;
 clear;
 
-obj1 = readObj('dino.obj'); %reads object file and stores vertices and faces.
+obj1 = readObj('keyframe1.obj'); %reads object file and stores vertices and faces.
 FV1 = obj1.f.v;
 V1 = obj1.v;
 
-obj2 = readObj('sea_horse.obj');
+obj2 = readObj('keyframe2.obj');
 FV2 = obj2.f.v;
 V2 = obj2.v;
 
