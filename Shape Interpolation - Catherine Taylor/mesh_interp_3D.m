@@ -8,8 +8,8 @@
 close all;
 clear;
 
-obj1 = readObj('cube1.obj'); %reads object file and stores vertices and faces.
-obj2 = readObj('cube2.obj');
+obj1 = readObj('sk1.obj'); %reads object file and stores vertices and faces.
+obj2 = readObj('sk2.obj');
 FV1 = obj1.f.v;
 V1 = obj1.v;
 V2 = obj2.v;
@@ -17,8 +17,8 @@ V2 = obj2.v;
 figure
 
 %Calculate diagonal of bounding box to find alpha value -------------------
-V_min = [min(V1(:,1)), min(V1(:,2)), min(V1(:,3))];
-V_max = [max(V1(:,1)), max(V1(:,2)), max(V1(:,3))];
+V_min = [min(V2(:,1)), min(V2(:,2)), min(V2(:,3))];
+V_max = [max(V2(:,1)), max(V2(:,2)), max(V2(:,3))];
 box_length = sqrt(dot(V_min - V_max, V_min - V_max));
 alpha = sqrt(1/box_length);
 %--------------------------------------------------------------------------
@@ -69,18 +69,13 @@ for i=1:length(FV1)
     end
 
     K(4*(i-1)+1:4*(i-1)+4, length(V1)+i) = area{i}*inv_kx{i}(1:4, 4);
-    
-    w = sqrt((1+R(1,1)+R(2,2)+R(3,3)))/2; %quaternion calculations.
-    x = (R(2,3) - R(3,2))/(4*w);
-    y = (R(3,1) - R(1,3))/(4*w);
-    z = (R(1,2)-R(2,1))/(4*w);
-    
-    q{i} =[w,x,y,z];
+
+    q{i} = Matrix_to_quaternion(R);
     angle{i} = acos(dot(q0,q{i}));
         
 end
 
-for j=1:total_interpolations+1
+for j= 1:total_interpolations+1
     t=1/total_interpolations*(j-1);
     
     for i=1:length(FV1)
@@ -89,7 +84,7 @@ for j=1:total_interpolations+1
         T_t = t*T{i};
         
         q_t = 1/sin(angle{i})*(sin((1-t)*angle{i}))*q0 + sin(t*angle{i})/sin(angle{i})*q{i}; %slerp
-        Rot_t = [1-2*q_t(3)^2 - 2*q_t(4)^2, 2*q_t(2)*q_t(3)+2*q_t(1)*q_t(4), 2*q_t(4)*q_t(2)- 2*q_t(1)*q_t(3); 2*q_t(2)*q_t(3)-2*q_t(1)*q_t(4), 1-2*q_t(2)^2 - 2*q_t(4)^2, 2*q_t(3)*q_t(4) + 2*q_t(1)*q_t(2); 2*q_t(2)*q_t(4)+2*q_t(1)*q_t(3), 2*q_t(3)*q_t(4)-2*q_t(1)*q_t(2), 1- 2*q_t(2)^2 - 2*q_t(3)^2];
+        Rot_t = quaternion_to_matrix(q_t);
         M_t = Rot_t*S_t;
 
         bx(4*(i-1)+1:4*(i-1)+4) = area{i}*[M_t(1,1), M_t(1,2), M_t(1,3), alpha*T_t(1)];
@@ -106,7 +101,8 @@ for j=1:total_interpolations+1
     trimesh(FV1(:, 1:3), V_intermediate(:,1), V_intermediate(:,2), V_intermediate(:,3));
     xlabel('x'), ylabel('y'), zlabel('z')
     title('As-rigid-as-possible 3D Interpolations')
-    axis([-2, 2, 0, 4,-2,2]);
+    %     axis([-2, 2, -5, ,-2,2]);
+    axis([-4, 6, -5, 5, -4,2])
    
     drawnow;
     

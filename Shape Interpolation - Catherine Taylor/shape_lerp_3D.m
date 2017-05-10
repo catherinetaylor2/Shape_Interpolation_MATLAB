@@ -23,6 +23,7 @@ for i=1:interpolations+1 %carries out linear interpolation from obj 1 to 2.
     trimesh(FV1(:,1:3), V_new(:,1), V_new(:,2), V_new(:,3));
     title('3D Linear Interpolation')
     axis([-2, 2, 0, 4,-2,2]);
+%         axis([-4, 6, -5, 5, -4,2])
     drawnow;
 end
 

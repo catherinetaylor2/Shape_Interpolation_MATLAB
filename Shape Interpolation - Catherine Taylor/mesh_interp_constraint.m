@@ -9,7 +9,7 @@ close all;
 clear;
 
 obj1 = readObj('keyframe1.obj'); %reads object file and stores vertices and faces.
-obj2 = readObj('keyframe2.obj');
+obj2 = readObj('sea_horse.obj');
 FV1 = obj1.f.v;
 V1 = obj1.v;
 V2 = obj2.v;
@@ -50,8 +50,8 @@ for i=1:length(FV1) %calculate A for each triangle.
     [V,D,U] = svd(Ai{i}); %decompose using single value decomposition.
     S{i} = U*D*U'; %symmetric matrix
     R = V*U'; %rotation matrix.
-    w = sqrt((1+R(1,1)+R(2,2)+1))/2; %quaternion calculations
-    q{i} =[w,0,0,(R(1,2)-R(2,1))/(4*w)];
+    R_3D = [R(1,1), R(1,2), 0; R(2,1), R(2,2),0 ; 0,0,1];
+    q{i} = Matrix_to_quaternion(R_3D); 
     angle{i} = acos(dot(q0,q{i}));
         
 end
@@ -61,8 +61,8 @@ for l=1:interpolations+1 %vary t between 0 and 1 to get deformation.
     for i =1:length(FV1)
 
         q_t = 1/sin(angle{i})*(sin((1-t)*angle{i}))*q0 + sin(t*angle{i})/sin(angle{i})*q{i}; %slerp
-        Rot_t = [1-2*q_t(3)^2 - 2*q_t(4)^2, 2*q_t(2)*q_t(3)+2*q_t(1)*q_t(4); 2*q_t(2)*q_t(3)-2*q_t(1)*q_t(4), 1-2*q_t(2)^2 - 2*q_t(4)^2];
-        At = Rot_t*((1-t)*eye(2) +  t*S{i});
+        Rot_t = quaternion_to_matrix(q_t);
+        At = Rot_t(1:2,1:2)*((1-t)*eye(2) +  t*S{i});
   
         b(4*(i-1)+1:4*(i-1)+4)=[At(1,1), At(1,2), At(2,1), At(2,2)]'; %build up matrix b, for min ||Ax-b||.
 

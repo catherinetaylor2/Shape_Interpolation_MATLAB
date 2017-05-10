@@ -8,8 +8,8 @@
 close all;
 clear;
 
-obj1 = readObj('man.obj'); %reads object file and stores vertices and faces.
-obj2 = readObj('man2.obj');
+obj1 = readObj('dino.obj'); %reads object file and stores vertices and faces.
+obj2 = readObj('keyframe1.obj');
 
 FV1 = obj1.f.v;
 V1 = obj1.v;
@@ -50,8 +50,8 @@ for i=1:length(FV1) %calculate A for each triangle.
     [V,D,U] = svd(Ai); %decompose using single value decomposition.
     Symmetric_Matrices{i} = U*D*U'; %symmetric matrix
     R = V*U'; %rotation matrix.
-    w = sqrt((1+R(1,1)+R(2,2)+1))/2; %quaternion calculations
-    q{i} =[w,0,0,(R(1,2)-R(2,1))/(4*w)];
+    R_3D = [R(1,1), R(1,2), 0; R(2,1), R(2,2),0 ; 0,0,1];
+    q{i} = Matrix_to_quaternion(R_3D); 
     angle{i} = acos(dot(q0,q{i}));
         
 end
@@ -64,9 +64,10 @@ for l=1:interpolations+1 %vary t between 0 and 1 to get deformation.
     for i =1:length(FV1) 
    
         q_t = 1/sin(angle{i})*(sin((1-t)*angle{i}))*q0 + sin(t*angle{i})/sin(angle{i})*q{i}; %slerp
-        Rot_t= [1-2*q_t(3)^2 - 2*q_t(4)^2, 2*q_t(2)*q_t(3)+2*q_t(1)*q_t(4); 2*q_t(2)*q_t(3)-2*q_t(1)*q_t(4), 1-2*q_t(2)^2 - 2*q_t(4)^2];
-        At = Rot_t*((1-t)*eye(2) +  t*Symmetric_Matrices{i});
+        Rot_t = quaternion_to_matrix(q_t);
+        At = Rot_t(1:2,1:2)*((1-t)*eye(2) +  t*Symmetric_Matrices{i});
         
+        index = find(FV1(i,1) == 1);
         if((FV1(i,1)==1))
             b(4*(i-1)+1:4*(i-1)+4)=[At(1,1)- (inv_px{i}(1,1)*v1+ inv_px{i}(1,2)*v2), At(1,2)- (inv_px{i}(2,1)*v1+ inv_px{i}(2,2)*v2), At(2,1)- (inv_px{i}(4,1)*v1 + inv_px{i}(4,2)*v2), At(2,2)- (inv_px{i}(5,1)*v1+ inv_px{i}(5,2)*v2)]'; %build up matrix b, for min ||Ax-b||.
         elseif ((FV1(i,2)==1))
@@ -102,13 +103,13 @@ for l=1:interpolations+1 %vary t between 0 and 1 to get deformation.
     subplot(1,2,2) %display results.
     trimesh(FV1, V_1(:,1), V_1(:,2));
     title('As-rigid-as-possible');
-    %     axis([-20 20 -15 15]);
-    axis([-2 2 -2 2]);
+    axis([-20 20 -15 15]);
+%     axis([-2 2 -2 2]);
     subplot(1,2,1)
     V_new2 = (1-t)*V1 + t*V2;
     trimesh(FV1, V_new2(:,1), V_new2(:,2));
     title('Linear');
-    %   axis([-20 20 -15 15]);
-    axis([-2 2 -2 2]);
+    axis([-20 20 -15 15]);
+%     axis([-2 2 -2 2]);
     drawnow;
 end

@@ -48,8 +48,8 @@ for i=1:length(FV1) %calculate A for each triangle.
     [V,D,U] = svd(Ai); %decompose using single value decomposition.
     Symmetric_matrices{1,i} = U*D*U'; %symmetric matrix
     R = V*U'; %rotation matrix.
-    w = sqrt((1+R(1,1)+R(2,2)+1))/2; %quaternion calculations
-    quaternions{1,i} =[w,0,0,(R(1,2)-R(2,1))/(4*w)];
+    R_3D = [R(1,1), R(1,2), 0; R(2,1), R(2,2),0 ; 0,0,1];
+    quaternions{1,i} = Matrix_to_quaternion(R_3D); 
     angles{1,i} = acos(dot(q0,quaternions{1,i}));
     
     for j =1:3
@@ -63,8 +63,8 @@ for i=1:length(FV1) %calculate A for each triangle.
     [V,D,U] = svd(Ai); %decompose using single value decomposition.
     Symmetric_matrices{2,i} = U*D*U'; %symmetric matrix
     R = V*U'; %rotation matrix.
-    w = sqrt((1+R(1,1)+R(2,2)+1))/2; %quaternion calculations
-    quaternions{2,i} =[w,0,0,(R(1,2)-R(2,1))/(4*w)];
+    R_3D = [R(1,1), R(1,2), 0; R(2,1), R(2,2),0 ; 0,0,1];
+    quaternions{2,i} = Matrix_to_quaternion(R_3D);
     angles{2,i} = acos(dot(q0,quaternions{2,i}));
 
     q_t = sin(angles{2,i})/sin(angles{2,i})*quaternions{2,i}; %slerp
@@ -107,8 +107,8 @@ for i=1:length(FV1) %calculate A for each triangle.
     [V,D,U] = svd(Ai); %decompose using single value decomposition.
     Symmetric_matrices{3,i} = U*D*U'; %symmetric matrix
     R = V*U'; %rotation matrix.
-    w = sqrt((1+R(1,1)+R(2,2)+1))/2; %quaternion calculations
-    quaternions{3,i} =[w,0,0,(R(1,2)-R(2,1))/(4*w)];
+    R_3D = [R(1,1), R(1,2), 0; R(2,1), R(2,2),0 ; 0,0,1];
+    quaternions{3,i} = Matrix_to_quaternion(R_3D); 
     angles{3,i} = acos(dot(q0,quaternions{3,i}));
 
     q_t = sin(angles{3,i})/sin(angles{3,i})*quaternions{3,i}; %slerp
@@ -149,8 +149,8 @@ for i=1:length(FV1) %calculate A for each triangle.
     [V,D,U] = svd(Ai); %decompose using single value decomposition.
     Symmetric_matrices{4,i} = U*D*U'; %symmetric matrix
     R = V*U'; %rotation matrix.
-    w = sqrt((1+R(1,1)+R(2,2)+1))/2; %quaternion calculations
-    quaternions{4,i} =[w,0,0,(R(1,2)-R(2,1))/(4*w)];
+    R_3D = [R(1,1), R(1,2), 0; R(2,1), R(2,2),0 ; 0,0,1];
+    quaternions{4,i} = Matrix_to_quaternion(R_3D); 
     angles{4,i} = acos(dot(q0,quaternions{4,i}));
     
     q_t = sin(angles{4,i})/sin(angles{4,i})*quaternions{4,i}; %slerp
@@ -193,8 +193,8 @@ for i=1:length(FV1) %calculate A for each triangle.
     [V,D,U] = svd(Ai); %decompose using single value decomposition.
     Symmetric_matrices{5,i} = U*D*U'; %symmetric matrix
     R = V*U'; %rotation matrix.
-    w = sqrt((1+R(1,1)+R(2,2)+1))/2; %quaternion calculations
-    quaternions{5,i} =[w,0,0,(R(1,2)-R(2,1))/(4*w)];
+    R_3D = [R(1,1), R(1,2), 0; R(2,1), R(2,2),0 ; 0,0,1];
+    quaternions{5,i} = Matrix_to_quaternion(R_3D); 
     angles{5,i} = acos(dot(q0,quaternions{5,i}));
 end
 
@@ -205,8 +205,8 @@ for in=1:5
         for i =1:length(FV1)
             
             q_t = 1/sin(angles{in,i})*(sin((1-t)*angles{in,i}))*q0 + sin(t*angles{in,i})/sin(angles{in,i})*quaternions{in,i}; %slerp
-            Rot_t= [1-2*q_t(3)^2 - 2*q_t(4)^2, 2*q_t(2)*q_t(3)+2*q_t(1)*q_t(4); 2*q_t(2)*q_t(3)-2*q_t(1)*q_t(4), 1-2*q_t(2)^2 - 2*q_t(4)^2];
-            At = Rot_t*((1-t)*eye(2) +  t*Symmetric_matrices{in,i});
+            Rot_t= quaternion_to_matrix(q_t);
+            At = Rot_t(1:2,1:2)*((1-t)*eye(2) +  t*Symmetric_matrices{in,i});
             b(4*(i-1)+1:4*(i-1)+4)=[At(1,1), At(1,2), At(2,1), At(2,2)]'; %build up matrix b, for min ||Ax-b||.
             
             for k=1:3 %build up matrix A, for min ||Ax-b||.

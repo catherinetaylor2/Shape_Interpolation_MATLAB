@@ -71,12 +71,7 @@ for i=1:length(FV1)
 
     K{1}(4*(i-1)+1:4*(i-1)+4, length(V1)+i) = area{1,i}*inv_kx{1,i}(1:4, 4);
     
-    w = sqrt((1+R(1,1)+R(2,2)+R(3,3)))/2; %quaternion calculations.
-    x = (R(2,3) - R(3,2))/(4*w);
-    y = (R(3,1) - R(1,3))/(4*w);
-    z = (R(1,2)-R(2,1))/(4*w);
-    
-    q{1,i} =[w,x,y,z];
+    q{1,i} =Matrix_to_quaternion( R );
     angle{1, i} = acos(dot(q0,q{1,i}));
     
     v1=u1;
@@ -108,12 +103,7 @@ for i=1:length(FV1)
 
     K{2}(4*(i-1)+1:4*(i-1)+4, length(V1)+i) = area{2,i}*inv_kx{2,i}(1:4, 4);
     
-    w = sqrt((1+R(1,1)+R(2,2)+R(3,3)))/2; %quaternion calculations.
-    x = (R(2,3) - R(3,2))/(4*w);
-    y = (R(3,1) - R(1,3))/(4*w);
-    z = (R(1,2)-R(2,1))/(4*w);
-    
-    q{2,i} =[w,x,y,z];
+    q{2,i} =Matrix_to_quaternion( R );
     angle{2, i} = acos(dot(q0,q{2,i}));
     
     v1=u1;
@@ -144,45 +134,40 @@ for i=1:length(FV1)
     end
 
     K{3}(4*(i-1)+1:4*(i-1)+4, length(V1)+i) = area{3,i}*inv_kx{3,i}(1:4, 4);
-    
-    w = sqrt((1+R(1,1)+R(2,2)+R(3,3)))/2; %quaternion calculations.
-    x = (R(2,3) - R(3,2))/(4*w);
-    y = (R(3,1) - R(1,3))/(4*w);
-    z = (R(1,2)-R(2,1))/(4*w);
-    
-    q{3,i} =[w,x,y,z];
+
+    q{3,i} =Matrix_to_quaternion( R );
     angle{3, i} = acos(dot(q0,q{3,i}));
 end
 
 for in = 1:3
-for j=1:total_interpolations
-    t=1/total_interpolations*(j-1);
-    
-    for i=1:length(FV1)
+    for j=1:total_interpolations
+        t=1/total_interpolations*(j-1);
         
-        S_t = (1-t)*eye(3) + t*S{in,i};
-        T_t = t*T{in,i};
+        for i=1:length(FV1)
+            
+            S_t = (1-t)*eye(3) + t*S{in,i};
+            T_t = t*T{in,i};
+            
+            q_t = 1/sin(angle{in,i})*(sin((1-t)*angle{in,i}))*q0 + sin(t*angle{in,i})/sin(angle{in,i})*q{in,i}; %slerp
+            Rot_t = quaternion_to_matrix(q_t);
+            M_t = Rot_t*S_t;
+            
+            bx(4*(i-1)+1:4*(i-1)+4) = area{in,i}*[M_t(1,1), M_t(1,2), M_t(1,3), alpha*T_t(1)];
+            by(4*(i-1)+1:4*(i-1)+4) = area{in,i}*[M_t(2,1), M_t(2,2), M_t(2,3), alpha*T_t(2)];
+            bz(4*(i-1)+1:4*(i-1)+4) = area{in,i}*[M_t(3,1), M_t(3,2), M_t(3,3), alpha*T_t(3)];
+        end
         
-        q_t = 1/sin(angle{in,i})*(sin((1-t)*angle{in,i}))*q0 + sin(t*angle{in,i})/sin(angle{in,i})*q{in,i}; %slerp
-        Rot_t = [1-2*q_t(3)^2 - 2*q_t(4)^2, 2*q_t(2)*q_t(3)+2*q_t(1)*q_t(4), 2*q_t(4)*q_t(2)- 2*q_t(1)*q_t(3); 2*q_t(2)*q_t(3)-2*q_t(1)*q_t(4), 1-2*q_t(2)^2 - 2*q_t(4)^2, 2*q_t(3)*q_t(4) + 2*q_t(1)*q_t(2); 2*q_t(2)*q_t(4)+2*q_t(1)*q_t(3), 2*q_t(3)*q_t(4)-2*q_t(1)*q_t(2), 1- 2*q_t(2)^2 - 2*q_t(3)^2];
-        M_t = Rot_t*S_t;
-
-        bx(4*(i-1)+1:4*(i-1)+4) = area{in,i}*[M_t(1,1), M_t(1,2), M_t(1,3), alpha*T_t(1)];
-        by(4*(i-1)+1:4*(i-1)+4) = area{in,i}*[M_t(2,1), M_t(2,2), M_t(2,3), alpha*T_t(2)];
-        bz(4*(i-1)+1:4*(i-1)+4) = area{in,i}*[M_t(3,1), M_t(3,2), M_t(3,3), alpha*T_t(3)];
+        V_new_x = (K{in}'*K{in})\K{in}'*bx;
+        V_new_y = (K{in}'*K{in})\K{in}'*by;
+        V_new_z = (K{in}'*K{in})\K{in}'*bz;
+        
+        V_intermediate = [V_new_x(1:length(V1)), V_new_y(1:length(V1)), V_new_z(1:length(V1))];
+        
+        trimesh(FV1(:, 1:3), V_intermediate(:,1), V_intermediate(:,2), V_intermediate(:,3));
+        xlabel('x'), ylabel('y'), zlabel('z')
+        title('As-rigid-as-possible 3D Interpolations')
+        axis([-2, 2, 0, 4,-2,2]);
+        drawnow;
+        
     end
-    
-    V_new_x = (K{in}'*K{in})\K{in}'*bx;
-    V_new_y = (K{in}'*K{in})\K{in}'*by;
-    V_new_z = (K{in}'*K{in})\K{in}'*bz;
-    
-    V_intermediate = [V_new_x(1:length(V1)), V_new_y(1:length(V1)), V_new_z(1:length(V1))];
-
-    trimesh(FV1(:, 1:3), V_intermediate(:,1), V_intermediate(:,2), V_intermediate(:,3));
-    xlabel('x'), ylabel('y'), zlabel('z')
-    title('As-rigid-as-possible 3D Interpolations')
-    axis([-2, 2, 0, 4,-2,2]);
-    drawnow;
-    
-end
 end
