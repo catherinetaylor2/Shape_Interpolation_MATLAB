@@ -8,8 +8,8 @@
 close all;
 clear;
 
-obj1 = readObj('dino.obj'); %reads object file and stores vertices and faces.
-obj2 = readObj('keyframe1.obj');
+obj1 = readObj('man.obj'); %reads object file and stores vertices and faces.
+obj2 = readObj('man2.obj');
 
 FV1 = obj1.f.v;
 V1 = obj1.v;
@@ -103,13 +103,13 @@ for l=1:interpolations+1 %vary t between 0 and 1 to get deformation.
     subplot(1,2,2) %display results.
     trimesh(FV1, V_1(:,1), V_1(:,2));
     title('As-rigid-as-possible');
-    axis([-20 20 -15 15]);
-%     axis([-2 2 -2 2]);
+%     axis([-20 20 -15 15]);
+    axis([-2 2 -2 2]);
     subplot(1,2,1)
     V_new2 = (1-t)*V1 + t*V2;
     trimesh(FV1, V_new2(:,1), V_new2(:,2));
     title('Linear');
-    axis([-20 20 -15 15]);
-%     axis([-2 2 -2 2]);
+%     axis([-20 20 -15 15]);
+    axis([-2 2 -2 2]);
     drawnow;
 end

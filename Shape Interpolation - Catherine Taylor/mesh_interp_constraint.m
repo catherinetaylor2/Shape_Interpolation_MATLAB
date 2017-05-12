@@ -8,12 +8,13 @@
 close all;
 clear;
 
-obj1 = readObj('keyframe1.obj'); %reads object file and stores vertices and faces.
+obj1 = readObj('dino.obj'); %reads object file and stores vertices and faces.
 obj2 = readObj('sea_horse.obj');
 FV1 = obj1.f.v;
 V1 = obj1.v;
 V2 = obj2.v;
-
+C=imread('dino_texture.bmp');
+C1 = imread('sea_texture.bmp');
 figure
 subplot(1,2,1)
 trimesh(FV1, V1(:,1), V1(:,2));
@@ -87,17 +88,40 @@ for l=1:interpolations+1 %vary t between 0 and 1 to get deformation.
             V_1((i-1)/2+1,1) = V_new(i);
         end
     end
-
+    
     subplot(1,2,2) %display results.
-    trimesh(FV1, V_1(:,1), V_1(:,2));
+    for k=1 :length(FV1)
+        index1 = FV1(k,1);
+        index2 = FV1(k,2);
+        index3 = FV1(k,3);
+        c=(1-t)*C(1:3,k) + t*C1(1:3,k);
+        x = [V_1(index1,1), V_1(index2,1), V_1(index3,1)]';
+        y = [V_1(index1,2), V_1(index2,2), V_1(index3,2)]';
+        z = [0,0,0]';
+        fill3(x,y,z, c);
+        hold all
+    end
+    hold off
     title('As-rigid-as-possible');
     axis([-20 20 -20 15]);
-    %  axis([-2 2 -2 2]);
+    
     subplot(1,2,1)
     V_new2 = (1-t)*V1 + t*V2;
-    trimesh(FV1, V_new2(:,1), V_new2(:,2));
+     for k=1 :length(FV1)
+        index1 = FV1(k,1);
+        index2 = FV1(k,2);
+        index3 = FV1(k,3);
+        c=(1-t)*C(1:3,k) + t*C1(1:3,k);
+        x = [V_new2(index1,1), V_new2(index2,1), V_new2(index3,1)]';
+        y = [V_new2(index1,2), V_new2(index2,2), V_new2(index3,2)]';
+        z = [0,0,0]';
+        fill3(x,y,z, c);
+        hold all
+    end
+    hold off
     title('Linear');
     axis([-20 20 -20 15]);
-    %      axis([-2 2 -2 2]);
     drawnow;
+    
+
 end
